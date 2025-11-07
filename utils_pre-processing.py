@@ -114,3 +114,56 @@ def drop_not_chosen_target(df: pd.DataFrame, target_columns: list[str]) -> pd.Da
         if col not in target_columns and col in df.columns:
             df.drop(col, axis=1, inplace=True)
     return df
+
+def add_features(df):
+    """Adds feature engineering columns for predicting yield strength"""
+
+    # Carbon Equivalent (CE)
+    df['ce_iww'] = (
+        df['carbon'] +
+        df['manganese'] / 6 +
+        (df['chromium'] + df['molybdenum'] + df['vanadium']) / 5 +
+        (df['nickel'] + df['copper']) / 15
+    )
+
+    # Carbon Squared (C²)
+    df['carbon_squared'] = df['carbon'] ** 2
+
+    # Mn/C Ratio
+    df['mn_c_ratio'] = df['manganese'] / (df['carbon'] + 1e-6)
+
+    # Arc Energy (Voltage × Current)
+    df['arc_energy'] = df['voltage'] * df['current']
+
+    # HAZ Hardness Estimate
+    df['haz_hardness'] = (
+        90 +
+        1050 * df['carbon'] +
+        45 * df['silicon'] +
+        30 * df['manganese'] +
+        5 * df['heat_input']
+    )
+
+    # Mn/S Ratio
+    df['mn_s_ratio'] = df['manganese'] / (df['sulphur'] + 1e-6)
+
+    # Austenite Stabilizer 
+    df['austenite_stabilizer'] = df['manganese']/2 + 10*df['carbon'] + df['nickel']
+
+    return df
+
+
+from sklearn.model_selection import train_test_split
+
+def split_data(df, target='yield_strength', test_size=0.2, random_state=42):
+    """
+    Split the DataFrame into training and test sets using an 80/20 split.
+    """
+    X = df.drop(columns=[target])
+    y = df[target]
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, random_state=random_state
+    )
+
+    return X_train, X_test, y_train, y_test
