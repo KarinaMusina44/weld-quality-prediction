@@ -114,3 +114,34 @@ def drop_not_chosen_target(df: pd.DataFrame, target_columns: list[str]) -> pd.Da
         if col not in target_columns and col in df.columns:
             df.drop(col, axis=1, inplace=True)
     return df
+
+
+def scaling_data(X: pd.DataFrame) -> pd.DataFrame:
+    """Scales the features in the DataFrame using StandardScaler."""
+    from sklearn.preprocessing import StandardScaler
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    X_scaled_df = pd.DataFrame(X_scaled, columns=X.columns)
+
+    return X_scaled_df
+
+def collinearity_management(df: pd.DataFrame, threshold: float = 0.9) -> pd.DataFrame:
+    """Removes highly collinear features from the DataFrame based on the specified threshold."""
+    corr_matrix = df.corr().abs()
+    upper_triangle = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+
+    to_drop = [column for column in upper_triangle.columns if any(upper_triangle[column] > threshold)]
+    df_reduced = df.drop(columns=to_drop)
+
+    return df_reduced
+
+def pca(X: pd.DataFrame, n_components: int) -> pd.DataFrame:
+    """Applies Principal Component Analysis (PCA) to reduce the dimensionality of the feature set."""
+    from sklearn.decomposition import PCA
+
+    pca = PCA(n_components=n_components)
+    X_pca = pca.fit_transform(X)
+    X_pca_df = pd.DataFrame(X_pca, columns=[f'PC{i+1}' for i in range(n_components)])
+
+    return X_pca_df
