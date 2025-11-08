@@ -1,22 +1,27 @@
+import json
+import re
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import pandas as pd
+import numpy as np
+import sklearn
 import sys
 assert sys.version_info >= (3, 5)
-import sklearn
 assert sklearn.__version__ >= "0.20"
-import numpy as np
-import pandas as pd
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import re
+
+with open("config.json", encoding="utf-8") as f:
+    cfg = json.load(f)
+    COLUMNS = cfg["columns"]
+    DATA_PATH = cfg["data_path"]
 
 
-def import_data(file_path):
-    """Imports data from a CSV file into a pandas DataFrame. 
-        Clean the columns names by removing spaces, converting to lowercase.
+def import_data():
+    """Imports data from a CSV file into a pandas DataFrame with clean column names. 
     """
     try:
-        data = pd.read_csv(file_path)
+        data = pd.read_csv(DATA_PATH, sep=r"\s+", header=None)
         print(f"Data imported successfully from {file_path}")
-        data = data[0].str.split(r'\s+', expand=True).rename(columns=lambda i: f"col_{i+1}")
+        data.columns = COLUMNS
         return data
     except Exception as e:
         print(f"Error importing data: {e}")
@@ -24,10 +29,9 @@ def import_data(file_path):
 
 
 def handle_intervals(df: pd.DataFrame) -> pd.DataFrame:
-
     """
     Clean and format numeric data in a pandas DataFrame in the case of intervals or '<' patterns.
-    
+
     Rules:
     - If a cell contains '<value', it is replaced by value / 2.
     - If a cell contains 'value1-value2', it is replaced by the average of the two values.
@@ -57,6 +61,7 @@ def handle_intervals(df: pd.DataFrame) -> pd.DataFrame:
 
     return formatted_df
 
+
 def handle_nitrogen(df: pd.DataFrame, nitrogen_column_name: str) -> pd.DataFrame:
     """
     Function to process the 'nitrogen' column in the DataFrame.
@@ -64,17 +69,15 @@ def handle_nitrogen(df: pd.DataFrame, nitrogen_column_name: str) -> pd.DataFrame
     handles any conversion errors by setting invalid parsing to NaN.
     """
     if nitrogen_column_name in df.columns:
-        df[nitrogen_column_name] = pd.to_numeric(df[nitrogen_column_name], errors='coerce')
+        df[nitrogen_column_name] = pd.to_numeric(
+            df[nitrogen_column_name], errors='coerce')
     return df
-
-import pandas as pd
-import re
 
 
 def handle_hardness(df: pd.DataFrame, hardness_column_name: str) -> pd.DataFrame:
     """
     Function to process the 'hardness' column in the DataFrame.
-    
+
     The column contains strings in the format "Value1(HvValue2)".
     This function extracts Value1 (the numeric part before the '(') and converts it to a numeric value.
     Non-numeric or malformed entries are set to NaN.
@@ -98,15 +101,18 @@ def handle_hardness(df: pd.DataFrame, hardness_column_name: str) -> pd.DataFrame
     df[hardness_column_name] = df[hardness_column_name].apply(extract_value)
 
     # Convert the column to numeric, coercing invalid values to NaN
-    df[hardness_column_name] = pd.to_numeric(df[hardness_column_name], errors='coerce')
+    df[hardness_column_name] = pd.to_numeric(
+        df[hardness_column_name], errors='coerce')
 
     return df
+
 
 def drop_non_informative_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     df.drop('weld_id', axis=1, inplace=True)
     df.drop('col_45', axis=1, inplace=True)
     return df
+
 
 def drop_not_chosen_target(df: pd.DataFrame, target_columns: list[str]) -> pd.DataFrame:
     """Drops all target columns except the one chosen for Machine Learning."""
