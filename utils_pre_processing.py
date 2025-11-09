@@ -3,6 +3,7 @@ import json
 import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder
 import re
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -292,3 +293,99 @@ def split_data(df, target='yield_strength_mpa', test_size=0.2, random_state=42):
     )
 
     return X_train, X_test, y_train, y_test
+
+
+def viz_outliers(X_train):
+    num_cols = X_train.select_dtypes('number').columns.tolist()
+    k = len(num_cols)
+    ncols = 3
+    nrows = (k + ncols - 1) // ncols
+
+    fig, axes = plt.subplots(nrows, ncols, figsize=(
+        ncols*4.2, nrows*3.1), squeeze=False)
+    axes = axes.ravel()
+
+    for i, col in enumerate(num_cols):
+        ax = axes[i]
+        s = X_train[col]
+        q005, q995 = s.quantile([0.005, 0.995])
+
+        tails = s.le(q005) | s.ge(q995)
+        mid = ~tails
+
+        ax.scatter(X_train.index[mid], s[mid], s=8,
+                   alpha=0.7, label='Central 99%')
+        ax.scatter(X_train.index[tails], s[tails], s=10, alpha=0.85, color='red',
+                   label='Tails (≤0.5% / ≥99.5%)')
+
+        ax.axhline(q005, linestyle='--', linewidth=1)
+        ax.axhline(q995, linestyle='--', linewidth=1)
+        ax.set_title(col, fontsize=9)
+        ax.tick_params(axis='x', labelrotation=45)
+
+    # remove unused axes
+    for j in range(i + 1, nrows * ncols):
+        fig.delaxes(axes[j])
+
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper center',  frameon=False)
+
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.show()
+
+
+def winsorize_columns(X_train, X_test, cols, lower=0.005, upper=0.995):
+    """
+    Fit quantile caps on X_train[cols] and apply the same caps to X_train and X_test.
+    Only the provided `cols` are clipped; other columns are left unchanged.
+    """
+    # keep only columns present in both splits
+    cols = [c for c in cols if c in X_train.columns and c in X_test.columns]
+    if not cols:
+        return X_train.copy(), X_test.copy()
+
+    q = X_train[cols].quantile([lower, upper])
+    low, high = q.loc[lower], q.loc[upper]
+
+    Xtr = X_train.copy()
+    Xte = X_test.copy()
+    Xtr[cols] = X_train[cols].clip(low, high, axis=1)
+    Xte[cols] = X_test[cols].clip(low, high, axis=1)
+
+    return Xtr, Xte
+
+
+def one_hot_train_test(X_train_no_outlier: pd.DataFrame, X_test_no_outlier: pd.DataFrame):
+    cat_cols = X_train_no_outlier.select_dtypes(
+        include=["object", "category"]).columns.tolist()
+    print(f'Categorical columns {cat_cols}')
+    num_cols = [c for c in X_train_no_outlier.columns if c not in cat_cols]
+    print(f'Numerical columns {num_cols}')
+    ohe = OneHotEncoder(handle_unknown="ignore",
+                        sparse_output=False, drop=None)
+
+    if cat_cols:
+        ohe.fit(X_train_no_outlier[cat_cols])
+
+        Xtr_cat = pd.DataFrame(
+            ohe.transform(X_train_no_outlier[cat_cols]),
+            index=X_train_no_outlier.index,
+            columns=ohe.get_feature_names_out(cat_cols),
+        )
+        Xte_cat = pd.DataFrame(
+            ohe.transform(X_test_no_outlier[cat_cols]),
+            index=X_test_no_outlier.index,
+            columns=ohe.get_feature_names_out(cat_cols),
+        )
+    else:
+        Xtr_cat = pd.DataFrame(index=X_train_no_outlier.index)
+        Xte_cat = pd.DataFrame(index=X_test_no_outlier.index)
+
+    Xtr_num = X_train_no_outlier[num_cols].copy()
+    Xte_num = X_test_no_outlier[num_cols].copy()
+
+    X_train_oh = pd.concat([Xtr_num, Xtr_cat], axis=1)
+    X_test_oh = pd.concat([Xte_num, Xte_cat], axis=1)
+    print(f'Columns after one-hot: {X_train_oh.columns.tolist()}')
+
+    return X_train_oh, X_test_oh
