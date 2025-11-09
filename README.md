@@ -87,7 +87,7 @@
 
 6. **`drop_not_chosen_target(df)`**
 
-   * Remove non-selected targets (*UTS*).
+   * Remove non-selected targets. 
    * Justify with correlation matrix + initial PCA.
 
 7. **Feature Engineering**
@@ -129,3 +129,11 @@
 * Propose **feature-engineering** ideas.
 * Address **collinearity** (PCA + correlation matrix).
 * Decide on **evaluation metrics** for model comparison.
+
+
+### ```2025-10-28``` - Tasks distribution
+* Sarah  => 1-6
+* Albane => 7-8
+* Karina => 9-10
+* Eliott => 11-12
+
