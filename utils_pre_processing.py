@@ -3,6 +3,7 @@ import json
 import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 from sklearn.preprocessing import OneHotEncoder
 import re
 import matplotlib.pyplot as plt
@@ -389,3 +390,35 @@ def one_hot_train_test(X_train_no_outlier: pd.DataFrame, X_test_no_outlier: pd.D
     print(f'Columns after one-hot: {X_train_oh.columns.tolist()}')
 
     return X_train_oh, X_test_oh
+
+
+def scaling_data(X_train: pd.DataFrame, X_test: pd.DataFrame) -> tuple[pd.DataFrame]:
+    """Scales the features in the DataFrame using StandardScaler."""
+
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
+    return X_train_scaled, X_test_scaled
+
+def collinearity_management(df_train: pd.DataFrame, df_test: pd.DataFrame, threshold: float = 0.9) -> tuple[pd.DataFrame]:
+    """Removes highly collinear features from the DataFrame based on the specified threshold."""
+    corr_matrix = df_train.corr().abs()
+    upper_triangle = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+
+    to_drop = [column for column in upper_triangle.columns if any(upper_triangle[column] > threshold)]
+    df_train_reduced = df_train.drop(columns=to_drop)
+    df_test_reduced = df_test.drop(columns=to_drop)
+
+    return df_train_reduced, df_test_reduced
+
+def pca(X_train: pd.DataFrame, X_test: pd.DataFrame, n_components: int) -> tuple[pd.DataFrame]:
+    """Applies Principal Component Analysis (PCA) to reduce the dimensionality of the feature set."""
+
+    pca = PCA(n_components=n_components)
+    X_train_pca = pca.fit_transform(X_train)
+    X_test_pca = pca.transfrom(X_test)
+    X_train_pca_df = pd.DataFrame(X_train_pca, columns=[f'PC{i+1}' for i in range(n_components)])
+    X_test_pca_df = pd.DataFrame(X_test_pca, columns=[f'PC{i+1}' for i in range(n_components)])
+
+    return X_train_pca_df, X_test_pca_df
