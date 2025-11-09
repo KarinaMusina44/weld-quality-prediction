@@ -184,9 +184,13 @@ def drop_non_informative_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def correlation_matrix(processed_df: pd.DataFrame) -> None:
+def correlation_matrix(processed_df: pd.DataFrame, target_col: str) -> None:
     """Generates and displays a correlation matrix heatmap for the DataFrame."""
     numeric_df = processed_df.select_dtypes(include=[np.number])
+    if target_col in numeric_df.columns:
+        ordered_cols = [target_col] + \
+            [c for c in numeric_df.columns if c != target_col]
+        numeric_df = numeric_df[ordered_cols]
     corr = numeric_df.corr()
 
     print("Numeric columns used for correlation:", list(numeric_df.columns))
@@ -238,41 +242,45 @@ def add_features(df):
 
     # Carbon Equivalent (CE)
     df['ce_iww'] = (
-        df['carbon'] +
-        df['manganese'] / 6 +
-        (df['chromium'] + df['molybdenum'] + df['vanadium']) / 5 +
-        (df['nickel'] + df['copper']) / 15
+        df['carbon_concentration_weight'] +
+        df['manganese_concentration_weight'] / 6 +
+        (df['chromium_concentration_weight'] + df['molybdenum_concentration_weight'] + df['vanadium_concentration_weight']) / 5 +
+        (df['nickel_concentration_weight'] +
+         df['copper_concentration_weight']) / 15
     )
 
     # Carbon Squared (C²)
-    df['carbon_squared'] = df['carbon'] ** 2
+    df['carbon_squared'] = df['carbon_concentration_weight'] ** 2
 
     # Mn/C Ratio
-    df['mn_c_ratio'] = df['manganese'] / (df['carbon'] + 1e-6)
+    df['mn_c_ratio'] = df['manganese_concentration_weight'] / \
+        (df['carbon_concentration_weight'] + 1e-6)
 
     # Arc Energy (Voltage × Current)
-    df['arc_energy'] = df['voltage'] * df['current']
+    df['arc_energy'] = df['voltage_v'] * df['current_a']
 
     # HAZ Hardness Estimate
     df['haz_hardness'] = (
         90 +
-        1050 * df['carbon'] +
-        45 * df['silicon'] +
-        30 * df['manganese'] +
-        5 * df['heat_input']
+        1050 * df['carbon_concentration_weight'] +
+        45 * df['silicon_concentration_weight'] +
+        30 * df['manganese_concentration_weight'] +
+        5 * df['heat_input_kjmm1']
     )
 
     # Mn/S Ratio
-    df['mn_s_ratio'] = df['manganese'] / (df['sulphur'] + 1e-6)
+    df['mn_s_ratio'] = df['manganese_concentration_weight'] / \
+        (df['sulphur_concentration_weight'] + 1e-6)
 
     # Austenite Stabilizer
-    df['austenite_stabilizer'] = df['manganese'] / \
-        2 + 10*df['carbon'] + df['nickel']
+    df['austenite_stabilizer'] = df['manganese_concentration_weight'] / \
+        2 + 10*df['carbon_concentration_weight'] + \
+        df['nickel_concentration_weight']
 
     return df
 
 
-def split_data(df, target='yield_strength', test_size=0.2, random_state=42):
+def split_data(df, target='yield_strength_mpa', test_size=0.2, random_state=42):
     """
     Split the DataFrame into training and test sets using an 80/20 split.
     """
