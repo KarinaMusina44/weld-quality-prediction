@@ -1,19 +1,18 @@
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import pandas as pd
+import numpy as np
+import sklearn
 from sklearn.model_selection import train_test_split
-import json
-import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression
 import re
-from sklearn.impute import SimpleImputer
+import json
+import seaborn as sns
 from typing import Tuple
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import pandas as pd
-import numpy as np
-import sklearn
 import sys
 assert sys.version_info >= (3, 5)
 assert sklearn.__version__ >= "0.20"
@@ -164,7 +163,7 @@ def drop_non_informative_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     Steps:
     1. Drop columns with more than 80% missing values.
-    2. Print columns with 40% to 80% missing values for further eX_aftermination.
+    2. Print columns with 40% to 80% missing values for further examination.
 
     Parameters:
         df (pd.DataFrame): Input dataframe.
@@ -345,7 +344,6 @@ def winsorize_columns(X_train, X_test, cols, lower=0.005, upper=0.995):
     Fit quantile caps on X_train[cols] and apply the same caps to X_train and X_test.
     Only the provided `cols` are clipped; other columns are left unchanged.
     """
-    cols = X_train.columns
 
     q = X_train[cols].quantile([lower, upper])
     low, high = q.loc[lower], q.loc[upper]
