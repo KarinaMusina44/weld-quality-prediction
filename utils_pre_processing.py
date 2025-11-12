@@ -559,17 +559,36 @@ def scaling_data(X_train: pd.DataFrame, X_test: pd.DataFrame) -> tuple[pd.DataFr
 
 
 def collinearity_management(df_train: pd.DataFrame, df_test: pd.DataFrame, threshold: float = 0.9) -> tuple[pd.DataFrame]:
-    """Removes highly collinear features from the DataFrame based on the specified threshold."""
+    """
+    Removes highly collinear features from the DataFrames based on the specified threshold.
+    
+    Parameters
+    ----------
+    df_train : pd.DataFrame
+        Training set.
+    df_test : pd.DataFrame
+        Test set.
+    threshold : float, optional
+        Correlation threshold above which features are considered collinear, by default 0.9.
+    
+    Returns
+    -------
+    tuple[pd.DataFrame, pd.DataFrame, list[str]]
+        Reduced training and test sets, and the list of removed columns.
+    """
     corr_matrix = df_train.corr().abs()
-    upper_triangle = corr_matrix.where(
-        np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+    upper_triangle = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+    to_drop = [col for col in upper_triangle.columns if any(upper_triangle[col] > threshold)]
 
-    to_drop = [column for column in upper_triangle.columns if any(
-        upper_triangle[column] > threshold)]
+    if len(to_drop) == len(df_train.columns):
+        raise ValueError("All features are collinear above the threshold. Adjust the threshold or review the data.")
+
     df_train_reduced = df_train.drop(columns=to_drop)
-    df_test_reduced = df_test.drop(columns=to_drop)
+    df_test_reduced = df_test.drop(columns=to_drop, errors='ignore')
 
-    return df_train_reduced, df_test_reduced
+    print(f"Removed {len(to_drop)} features due to high collinearity (>{threshold}): {to_drop}")
+
+    return df_train_reduced, df_test_reduced, to_drop
 
 
 def pca(X_train: pd.DataFrame, X_test: pd.DataFrame, n_components: int) -> tuple[pd.DataFrame]:
