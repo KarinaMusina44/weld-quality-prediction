@@ -592,14 +592,35 @@ def collinearity_management(df_train: pd.DataFrame, df_test: pd.DataFrame, thres
 
 
 def pca(X_train: pd.DataFrame, X_test: pd.DataFrame, n_components: int) -> tuple[pd.DataFrame]:
-    """Applies Principal Component Analysis (PCA) to reduce the dimensionality of the feature set."""
-
+    """
+    Applies Principal Component Analysis (PCA) to reduce the dimensionality of the feature set.
+    
+    Parameters
+    ----------
+    X_train : pd.DataFrame
+        Training set of numerical features.
+    X_test : pd.DataFrame
+        Test set of numerical features.
+    n_components : int
+        Number of principal components to retain.
+    
+    Returns
+    -------
+    tuple[pd.DataFrame, pd.DataFrame, PCA]
+        PCA-transformed training and test sets, and the fitted PCA model.
+    """
     pca = PCA(n_components=n_components)
     X_train_pca = pca.fit_transform(X_train)
     X_test_pca = pca.transform(X_test)
-    X_train_pca_df = pd.DataFrame(
-        X_train_pca, columns=[f'PC{i+1}' for i in range(n_components)])
-    X_test_pca_df = pd.DataFrame(
-        X_test_pca, columns=[f'PC{i+1}' for i in range(n_components)])
 
-    return X_train_pca_df, X_test_pca_df
+    X_train_pca_df = pd.DataFrame(
+        X_train_pca, index=X_train.index, columns=[f'PC{i+1}' for i in range(n_components)]
+    )
+    X_test_pca_df = pd.DataFrame(
+        X_test_pca, index=X_test.index, columns=[f'PC{i+1}' for i in range(n_components)]
+    )
+
+    explained = pca.explained_variance_ratio_.sum() * 100
+    print(f"PCA retained {n_components} components explaining {explained:.2f}% of total variance.")
+
+    return X_train_pca_df, X_test_pca_df, pca
