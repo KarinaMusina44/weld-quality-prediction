@@ -1,4 +1,20 @@
 # weld-quality-prediction
+
+## Project Structure
+
+- **Notebook 1 – Pre-processing-clean**  
+  Describes the methodology used to explore, clean, and preprocess the data before model development.  
+  *(See `utils_pre_processing.py` for detailed functions — only the main pipeline is shown here.)*
+
+- **Notebook 2 – Model-Training**  
+  Supervised machine learning model training.
+
+- **Notebook 3 – SSL-Training**  
+  Semi-supervised learning approach.
+
+---
+---
+
 ## Backlog 
 ### ```2025-10-15``` — Kick-off Meeting 
 * Created the Git repository and discussed project organization.
@@ -130,7 +146,8 @@
 * Address **collinearity** (PCA + correlation matrix).
 * Decide on **evaluation metrics** for model comparison.
 
-
+---
+---
 ### ```2025-10-28``` - Tasks distribution
 * Sarah  => 1-6
 * Albane => 7-8
