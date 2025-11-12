@@ -538,7 +538,7 @@ def viz_imputed(X_before: pd.DataFrame,
                 handles.append(hh)
                 labels.append(ll)
     if handles:
-        fig.legend(handles, labels, loc="upper center", frameon=False, ncols=2)
+        fig.legend(handles, labels, loc="upper center", frameon=False)
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.show()
