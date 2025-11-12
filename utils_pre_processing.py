@@ -392,8 +392,7 @@ def one_hot_train_test(X_train_no_outlier: pd.DataFrame, X_test_no_outlier: pd.D
 
 def custom_impute_data(X_train: pd.DataFrame, X_test: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Custom imputer implementing the specified rules with direct SimpleImputer calls (no helper).
-    Assumes all listed columns exist in both train and test.
+    Custom imputer implementing the specified rules.
     """
     Xtr, Xte = X_train.copy(), X_test.copy()
 
@@ -561,7 +560,7 @@ def scaling_data(X_train: pd.DataFrame, X_test: pd.DataFrame) -> tuple[pd.DataFr
 def collinearity_management(df_train: pd.DataFrame, df_test: pd.DataFrame, threshold: float = 0.9) -> tuple[pd.DataFrame]:
     """
     Removes highly collinear features from the DataFrames based on the specified threshold.
-    
+
     Parameters
     ----------
     df_train : pd.DataFrame
@@ -570,23 +569,27 @@ def collinearity_management(df_train: pd.DataFrame, df_test: pd.DataFrame, thres
         Test set.
     threshold : float, optional
         Correlation threshold above which features are considered collinear, by default 0.9.
-    
+
     Returns
     -------
     tuple[pd.DataFrame, pd.DataFrame, list[str]]
         Reduced training and test sets, and the list of removed columns.
     """
     corr_matrix = df_train.corr().abs()
-    upper_triangle = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
-    to_drop = [col for col in upper_triangle.columns if any(upper_triangle[col] > threshold)]
+    upper_triangle = corr_matrix.where(
+        np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+    to_drop = [col for col in upper_triangle.columns if any(
+        upper_triangle[col] > threshold)]
 
     if len(to_drop) == len(df_train.columns):
-        raise ValueError("All features are collinear above the threshold. Adjust the threshold or review the data.")
+        raise ValueError(
+            "All features are collinear above the threshold. Adjust the threshold or review the data.")
 
     df_train_reduced = df_train.drop(columns=to_drop)
     df_test_reduced = df_test.drop(columns=to_drop, errors='ignore')
 
-    print(f"Removed {len(to_drop)} features due to high collinearity (>{threshold}): {to_drop}")
+    print(
+        f"Removed {len(to_drop)} features due to high collinearity (>{threshold}): {to_drop}")
 
     return df_train_reduced, df_test_reduced, to_drop
 
@@ -594,7 +597,7 @@ def collinearity_management(df_train: pd.DataFrame, df_test: pd.DataFrame, thres
 def pca(X_train: pd.DataFrame, X_test: pd.DataFrame, n_components: int) -> tuple[pd.DataFrame]:
     """
     Applies Principal Component Analysis (PCA) to reduce the dimensionality of the feature set.
-    
+
     Parameters
     ----------
     X_train : pd.DataFrame
@@ -603,7 +606,7 @@ def pca(X_train: pd.DataFrame, X_test: pd.DataFrame, n_components: int) -> tuple
         Test set of numerical features.
     n_components : int
         Number of principal components to retain.
-    
+
     Returns
     -------
     tuple[pd.DataFrame, pd.DataFrame, PCA]
@@ -614,13 +617,16 @@ def pca(X_train: pd.DataFrame, X_test: pd.DataFrame, n_components: int) -> tuple
     X_test_pca = pca.transform(X_test)
 
     X_train_pca_df = pd.DataFrame(
-        X_train_pca, index=X_train.index, columns=[f'PC{i+1}' for i in range(n_components)]
+        X_train_pca, index=X_train.index, columns=[
+            f'PC{i+1}' for i in range(n_components)]
     )
     X_test_pca_df = pd.DataFrame(
-        X_test_pca, index=X_test.index, columns=[f'PC{i+1}' for i in range(n_components)]
+        X_test_pca, index=X_test.index, columns=[
+            f'PC{i+1}' for i in range(n_components)]
     )
 
     explained = pca.explained_variance_ratio_.sum() * 100
-    print(f"PCA retained {n_components} components explaining {explained:.2f}% of total variance.")
+    print(
+        f"PCA retained {n_components} components explaining {explained:.2f}% of total variance.")
 
     return X_train_pca_df, X_test_pca_df, pca
